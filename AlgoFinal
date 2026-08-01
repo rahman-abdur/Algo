@@ -1,0 +1,229 @@
+// ================= 1_connected_components.cpp =================
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[1005];
+bool visited[1005];
+
+void dfs(int u) {
+    visited[u] = true;
+    for (int v : adj[u])
+        if (!visited[v]) dfs(v);
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+
+    int components = 0;
+    for (int i = 1; i <= n; i++) {
+        if (!visited[i]) {
+            components++;
+            dfs(i);
+        }
+    }
+    cout << components << endl;
+}
+
+
+// ================= 2_bfs_shortest_path.cpp =================
+#include <bits/stdc++.h>
+using namespace std;
+
+vector<int> adj[1005];
+int dist_[1005];
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    int s, t;
+    cin >> s >> t;
+
+    for (int i = 1; i <= n; i++) dist_[i] = -1;
+    dist_[s] = 0;
+    queue<int> q;
+    q.push(s);
+
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (dist_[v] == -1) {
+                dist_[v] = dist_[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    cout << dist_[t] << endl;
+}
+
+
+// ================= 3_dijkstra.cpp =================
+#include <bits/stdc++.h>
+using namespace std;
+typedef pair<int,int> pii;
+
+vector<pii> adj[1005];
+int dist_[1005];
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});
+    }
+    int s;
+    cin >> s;
+
+    for (int i = 1; i <= n; i++) dist_[i] = INT_MAX;
+    dist_[s] = 0;
+
+    priority_queue<pii, vector<pii>, greater<pii>> pq;
+    pq.push({0, s});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d > dist_[u]) continue;
+        for (auto [v, w] : adj[u]) {
+            if (dist_[u] + w < dist_[v]) {
+                dist_[v] = dist_[u] + w;
+                pq.push({dist_[v], v});
+            }
+        }
+    }
+
+    cout << "Vertex : Distance\n";
+    for (int i = 1; i <= n; i++)
+        cout << i << " : " << dist_[i] << "\n";
+}
+
+
+// ================= 4_bellman_ford.cpp =================
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<array<int,3>> edges(m);
+    for (int i = 0; i < m; i++)
+        cin >> edges[i][0] >> edges[i][1] >> edges[i][2];
+    int s;
+    cin >> s;
+
+    vector<int> dist_(n + 1, INT_MAX);
+    dist_[s] = 0;
+
+    for (int i = 1; i <= n - 1; i++) {
+        for (auto &e : edges) {
+            int u = e[0], v = e[1], w = e[2];
+            if (dist_[u] != INT_MAX && dist_[u] + w < dist_[v])
+                dist_[v] = dist_[u] + w;
+        }
+    }
+
+    bool negativeCycle = false;
+    for (auto &e : edges) {
+        int u = e[0], v = e[1], w = e[2];
+        if (dist_[u] != INT_MAX && dist_[u] + w < dist_[v]) {
+            negativeCycle = true;
+            break;
+        }
+    }
+
+    if (negativeCycle) {
+        cout << "Negative Cycle Detected" << endl;
+    } else {
+        for (int i = 1; i <= n; i++)
+            cout << i << " : " << dist_[i] << "\n";
+    }
+}
+
+
+// ================= 5_floyd_warshall.cpp =================
+#include <bits/stdc++.h>
+using namespace std;
+const int INF = 1e9;
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    vector<vector<int>> dist_(n + 1, vector<int>(n + 1, INF));
+    for (int i = 1; i <= n; i++) dist_[i][i] = 0;
+
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        dist_[u][v] = min(dist_[u][v], w);
+    }
+
+    for (int k = 1; k <= n; k++)
+        for (int i = 1; i <= n; i++)
+            for (int j = 1; j <= n; j++)
+                if (dist_[i][k] != INF && dist_[k][j] != INF)
+                    dist_[i][j] = min(dist_[i][j], dist_[i][k] + dist_[k][j]);
+
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= n; j++) {
+            if (dist_[i][j] == INF) cout << "INF ";
+            else cout << dist_[i][j] << " ";
+        }
+        cout << "\n";
+    }
+}
+
+
+// ================= 6_nqueens.cpp =================
+#include <bits/stdc++.h>
+using namespace std;
+
+int n;
+vector<int> col;
+
+bool isSafe(int row, int c) {
+    for (int r = 0; r < row; r++) {
+        if (col[r] == c || abs(col[r] - c) == abs(r - row))
+            return false;
+    }
+    return true;
+}
+
+bool solve(int row) {
+    if (row == n) return true;
+    for (int c = 0; c < n; c++) {
+        if (isSafe(row, c)) {
+            col[row] = c;
+            if (solve(row + 1)) return true;
+        }
+    }
+    return false;
+}
+
+int main() {
+    cin >> n;
+    col.assign(n, -1);
+
+    if (solve(0)) {
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++)
+                cout << (col[i] == j ? "Q " : ". ");
+            cout << "\n";
+        }
+    } else {
+        cout << "No Solution" << endl;
+    }
+}
